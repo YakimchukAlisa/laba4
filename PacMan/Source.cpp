@@ -177,7 +177,7 @@ public:
     void setPoints(int a) { points = a; }
     void setNextDirection(int a) { nextDirection = a; }
     void loseLife() { lives--; }
-    void addPoints(int p) { points += p; }
+    void addPoints(int points) { this->points += points; }                                  //оператор this
     static int getMaxPoints(); // объявление статического метода
     static void updateMaxPoints(int newPoints);
     int* getPointsPointer() {
