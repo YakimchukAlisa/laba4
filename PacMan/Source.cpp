@@ -23,7 +23,7 @@ private:
 
 public:
     ~GameSettings() {};
-    GameSettings() {}
+    GameSettings() {};
     GameSettings(std::string windowTitle, int gridSize,
         int pacmanStartX, int pacmanStartY,
         sf::Color pacmanColor, sf::Color squareColor, sf::Color smallCircleColor,
@@ -50,14 +50,18 @@ private:
     int count;
     int point;
     char type;
+    static int totalFoodCount;
 public:
     ~Food() {};
-    Food(int count, int point, char type) : count(count), point(point), type(type) {};
+    Food(int count, int point, char type) : count(count), point(point), type(type) { totalFoodCount += count; }
     int getCount() { return count; }
     int getPoint() { return point; }
     char getType() { return type; }
-    void decreaseCount() { count--; }
+    void decreaseCount() { count--; totalFoodCount--;}
+    static int getTotalFoodCount();
 };
+int Food::totalFoodCount = 0; // Инициализация статического поля вне класса
+int Food::getTotalFoodCount() { return Food::totalFoodCount; }
 
 class Map {
 private:
@@ -251,7 +255,7 @@ public:
     int WonOrLost(Food smallFood, Food bigFood, Text& Result)
     {
         int f = 1;
-        if (smallFood.getCount() == 0 && bigFood.getCount() == 0)
+        if (Food::getTotalFoodCount() == 0)
             Result.setString("You won! ");
         else if (!getLives())
             Result.setString("You lost! ");
@@ -558,44 +562,48 @@ public:
     }
 };
 
+class Game {
+public:
+    Game() {};
+    ~Game() {};
+    void resetGame(Map& map, Food& smallFood, Food& bigFood, Pacman& pacman, Ghost** ghostArray, GameSettings& settings, Text& Result) {
+        // сброс карты
 
-void resetGame(Map& map, Food& smallFood, Food& bigFood, Pacman& pacman, Ghost** ghostArray, GameSettings& settings, Text& Result) {
-    // сброс карты
+        map.createMap();
 
-    map.createMap();
+        // сброс еды
+        smallFood = Food(242, 5, 'o');
+        bigFood = Food(4, 10, 'O');
 
-    // сброс еды
-    smallFood = Food(242, 5, 'o');
-    bigFood = Food(4, 10, 'O');
+        // сброс Pacman
+        pacman.setX(settings.getPacmanStartX());
+        pacman.setY(settings.getPacmanStartY());
+        pacman.setNextX(settings.getPacmanStartX());
+        pacman.setNextY(settings.getPacmanStartY());
+        pacman.setScore(0);
+        pacman.setNextDirection(3);
+        pacman.setScore(0);
+        pacman.setLives(3);
+        pacman.setPoints(0);
 
-    // сброс Pacman
-    pacman.setX(settings.getPacmanStartX());
-    pacman.setY(settings.getPacmanStartY());
-    pacman.setNextX(settings.getPacmanStartX());
-    pacman.setNextY(settings.getPacmanStartY());
-    pacman.setScore(0);
-    pacman.setNextDirection(3);
-    pacman.setScore(0);
-    pacman.setLives(3);
-    pacman.setPoints(0);
-
-    // сброс призраков
-    Blinky& blinky = *static_cast<Blinky*>(ghostArray[0]);
-    Pinky& pinky = *static_cast<Pinky*>(ghostArray[1]);
-    Inky& inky = *static_cast<Inky*>(ghostArray[2]);
-    Clyde& clyde = *static_cast<Clyde*>(ghostArray[3]);
-    blinky.setAll(11, 14, 0, 3, 3);
-    pinky.setAll(13, 14, 0, 3, 3);
-    inky.setAll(15, 14, 0, 3, 3);
-    clyde.setAll(17, 14, 0, 3, 3);
-    map.setTile(pacman.getY(), pacman.getX(), ' ');
-    map.setTile(settings.getPacmanStartY(), settings.getPacmanStartX(), 'P');
-    Result.setString(" ");
-}
-
+        // сброс призраков
+        Blinky& blinky = *static_cast<Blinky*>(ghostArray[0]);
+        Pinky& pinky = *static_cast<Pinky*>(ghostArray[1]);
+        Inky& inky = *static_cast<Inky*>(ghostArray[2]);
+        Clyde& clyde = *static_cast<Clyde*>(ghostArray[3]);
+        blinky.setAll(11, 14, 0, 3, 3);
+        pinky.setAll(13, 14, 0, 3, 3);
+        inky.setAll(15, 14, 0, 3, 3);
+        clyde.setAll(17, 14, 0, 3, 3);
+        map.setTile(pacman.getY(), pacman.getX(), ' ');
+        map.setTile(settings.getPacmanStartY(), settings.getPacmanStartX(), 'P');
+        Result.setString(" ");
+    }
+};
 
 int main()
 {
+    Game game;
     //динамический массив объектов класса GameSettings 
     GameSettings* settingsArray;
     settingsArray = new GameSettings[2];
@@ -658,7 +666,7 @@ int main()
             if (event.type == Event::Closed)
                 window.close();
             if (event.type == Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
-                resetGame(map, smallFood, bigFood, pacman, ghostArray, settings, Result);
+                game.resetGame(map, smallFood, bigFood, pacman, ghostArray, settings, Result);
             }
         }
         window.clear(Color::Black);
