@@ -180,6 +180,12 @@ public:
     void addPoints(int p) { points += p; }
     static int getMaxPoints(); // объявление статического метода
     static void updateMaxPoints(int newPoints);
+    int* getPointsPointer() {
+        return &points; // Возвращаем указатель на переменную score
+    }
+    int& getLivesReference() {
+        return lives; // Возвращаем ссылку на переменную lives
+    }
    
 
     void move(Map& map, Food& smallFood, Food& bigFood) {
@@ -580,11 +586,12 @@ public:
         pacman.setY(settings.getPacmanStartY());
         pacman.setNextX(settings.getPacmanStartX());
         pacman.setNextY(settings.getPacmanStartY());
-        pacman.setScore(0);
         pacman.setNextDirection(3);
+        int* pointsPtr = pacman.getPointsPointer();
+        *pointsPtr = 0;                                              // Изменяем значение points через указатель
+        int& livesRef = pacman.getLivesReference();
+        livesRef = 3;                                              // Изменяем значение lives через ссылку
         pacman.setScore(0);
-        pacman.setLives(3);
-        pacman.setPoints(0);
 
         // сброс призраков
         Blinky& blinky = *static_cast<Blinky*>(ghostArray[0]);
