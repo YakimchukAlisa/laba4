@@ -155,6 +155,7 @@ public:
 class Pacman {
 private:
     int x, y, nextX, nextY, score, nextDirection, lives, points;
+    static int maxPoints;
 public:
     ~Pacman() {};
     Pacman(int x, int y, int nextX, int nextY, int score, int nextDirection, int lives, int points) : x(x), y(y), nextX(nextX), nextY(nextY), score(score), nextDirection(nextDirection), lives(lives), points(points) {};
@@ -173,6 +174,9 @@ public:
     void setNextDirection(int a) { nextDirection = a; }
     void loseLife() { lives--; }
     void addPoints(int p) { points += p; }
+    static int getMaxPoints(); // объявление статического метода
+    static void updateMaxPoints(int newPoints);
+   
 
     void move(Map& map, Food& smallFood, Food& bigFood) {
         if (Keyboard::isKeyPressed(Keyboard::Up) && map.getTile(nextY - 1, nextX) != 'X' && !(nextY == 17 && nextX == 0 || nextY == 17 && nextX == map.getW() - 1)) {
@@ -255,6 +259,18 @@ public:
         return f;
     }
 };
+
+int Pacman::maxPoints = 0; // Инициализация статической переменной
+// Реализация статического метода
+int Pacman::getMaxPoints() {
+    return maxPoints;
+}
+
+// Реализация статического метода
+void Pacman::updateMaxPoints(int newScore) {
+    if (newScore > maxPoints)
+        maxPoints = newScore;
+}
 
 class Ghost {
 private:
@@ -563,9 +579,7 @@ void resetGame(Map& map, Food& smallFood, Food& bigFood, Pacman& pacman, Ghost**
     pacman.setLives(3);
     pacman.setPoints(0);
 
-
     // сброс призраков
-     //Ghost** ghostArray = new Ghost * [4];
     Blinky& blinky = *static_cast<Blinky*>(ghostArray[0]);
     Pinky& pinky = *static_cast<Pinky*>(ghostArray[1]);
     Inky& inky = *static_cast<Inky*>(ghostArray[2]);
@@ -594,6 +608,7 @@ int main()
     GameSettings settings = settingsArray[rand() % 2];
 
     Pacman pacman(settings.getPacmanStartX(), settings.getPacmanStartY(), settings.getPacmanStartX(), settings.getPacmanStartY(), 0, 3, 3, 0);
+
     Ghost** ghostArray = new Ghost * [4];
     Map map(35, 30);
     map.createMap();
@@ -628,7 +643,13 @@ int main()
     Result.setCharacterSize(80);
     Result.setFillColor(sf::Color::White);
     Result.setPosition(5 * settings.getGridSize(), 10 * settings.getGridSize());
+    sf::Text Record;
+    Record.setFont(font);
+    Record.setCharacterSize(40);
+    Record.setFillColor(sf::Color::White);
+    Record.setPosition(11 * settings.getGridSize(), 1 * settings.getGridSize());
     RenderWindow window(VideoMode(settings.getGridSize() * map.getW(), settings.getGridSize() * map.getH()), settings.getWindowTitle());
+
     while (window.isOpen())
     {
         Event event;
@@ -652,6 +673,7 @@ int main()
             sf::Vector2u windowSize = window.getSize();
             Result.setPosition((windowSize.x - textBounds.width) / 2, (windowSize.y - textBounds.height) / 2 - 50);
             window.draw(Result);
+            pacman.updateMaxPoints(pacman.getPoints());
         }
         else
         {
@@ -681,8 +703,10 @@ int main()
         }
         pointsText.setString("Score " + std::to_string(pacman.getPoints()));
         livesText.setString("Lives " + std::to_string(pacman.getLives()));
+        Record.setString("Record " + std::to_string(pacman.getMaxPoints()));
         window.draw(pointsText);
         window.draw(livesText);
+        window.draw(Record);
         window.display();
     }
     delete[] settingsArray;
