@@ -74,7 +74,6 @@ public:
     int getW() const { return W; }
     char getTile(int y, int x) const { return  Mase[y][x]; }
     void setTile(int y, int x, char tile) { Mase[y][x] = tile; }
-
     void createMap() {
         std::string tempMase[] = {
             "                              ",
@@ -186,77 +185,8 @@ public:
     int& getLivesReference() {
         return lives; // Возвращаем ссылку на переменную lives
     }
-   
 
-    void move(Map& map, Food& smallFood, Food& bigFood) {
-        if (Keyboard::isKeyPressed(Keyboard::Up) && map.getTile(nextY - 1, nextX) != 'X' && !(nextY == 17 && nextX == 0 || nextY == 17 && nextX == map.getW() - 1)) {
-            nextDirection = 0;
-            nextX = x;
-            nextY = y;
-        }
-        if (Keyboard::isKeyPressed(Keyboard::Down) && map.getTile(nextY + 1, nextX) != 'X' && !(nextY == 17 && nextX == 0 || nextY == 17 && nextX == map.getW() - 1)) {
-            nextDirection = 1;
-            nextX = x;
-            nextY = y;
-        }
-        if (Keyboard::isKeyPressed(Keyboard::Left) && (map.getTile(nextY, nextX - 1) != 'X')) {
-            nextDirection = 2;
-            nextX = x;
-            nextY = y;
-        }
-        if (Keyboard::isKeyPressed(Keyboard::Right) && (map.getTile(nextY, nextX + 1) != 'X')) {
-            nextDirection = 3;
-            nextX = x;
-            nextY = y;
-        }
-
-        score++;
-        if (score >= 150)
-        {
-            switch (nextDirection)
-            {
-            case 0:
-                if (map.getTile(nextY - 1, nextX) != 'X' && nextY - 1 >= 0)
-                    nextY--;
-                break;
-            case 1:
-                if (map.getTile(nextY + 1, nextX) != 'X' && nextY + 1 <= 35)
-                    nextY++;
-                break;
-            case 2:
-                if (nextY == 17 && nextX == 1)
-                    nextX = map.getW() - 2;
-                else if (map.getTile(nextY, nextX - 1) != 'X' && nextX - 1 >= 0)
-                    nextX--;
-                break;
-            case 3:
-                if (nextY == 17 && nextX == map.getW() - 2)
-                    nextX = 1;
-                else if (map.getTile(nextY, nextX + 1) != 'X' && nextX + 1 <= 35)
-                    nextX++;
-                break;
-            }
-            score = 0;
-        }
-
-        if ((map.getTile(nextY, nextX) == ' ' || map.getTile(nextY, nextX) == smallFood.getType() || map.getTile(nextY, nextX) == bigFood.getType()) && nextY != 0 && nextX != 0)
-        {
-            if (map.getTile(nextY, nextX) == smallFood.getType())
-            {
-                addPoints(smallFood.getPoint());
-                smallFood.decreaseCount();
-            }
-            if (map.getTile(nextY, nextX) == bigFood.getType())
-            {
-                addPoints(bigFood.getPoint());
-                bigFood.decreaseCount();
-            }
-            map.setTile(y, x, ' ');
-            map.setTile(nextY, nextX, 'P');
-            x = nextX;
-            y = nextY;
-        }
-    }
+    friend void PacmanMove(Map& map, Food& smallFood, Food& bigFood, Pacman& pacman);
 
     int WonOrLost(Food smallFood, Food bigFood, Text& Result)
     {
@@ -269,6 +199,77 @@ public:
         return f;
     }
 };
+
+void PacmanMove(Map& map, Food& smallFood, Food& bigFood, Pacman& pacman)         //дружественная функция
+{
+    if (Keyboard::isKeyPressed(Keyboard::Up) && map.getTile(pacman.nextY - 1, pacman.nextX) != 'X' && !(pacman.nextY == 17 && pacman.nextX == 0 || pacman.nextY == 17 && pacman.nextX == map.getW() - 1)) {
+        pacman.nextDirection = 0;
+        pacman.nextX = pacman.x;
+        pacman.nextY = pacman.y;
+    }
+    if (Keyboard::isKeyPressed(Keyboard::Down) && map.getTile(pacman.nextY + 1, pacman.nextX) != 'X' && !(pacman.nextY == 17 && pacman.nextX == 0 || pacman.nextY == 17 && pacman.nextX == map.getW() - 1)) {
+        pacman.nextDirection = 1;
+        pacman.nextX = pacman.x;
+        pacman.nextY = pacman.y;
+    }
+    if (Keyboard::isKeyPressed(Keyboard::Left) && (map.getTile(pacman.nextY, pacman.nextX - 1) != 'X')) {
+        pacman.nextDirection = 2;
+        pacman.nextX = pacman.x;
+        pacman.nextY = pacman.y;
+    }
+    if (Keyboard::isKeyPressed(Keyboard::Right) && (map.getTile(pacman.nextY, pacman.nextX + 1) != 'X')) {
+        pacman.nextDirection = 3;
+        pacman.nextX = pacman.x;
+        pacman.nextY = pacman.y;
+    }
+
+    pacman.score++;
+    if (pacman.score >= 150)
+    {
+        switch (pacman.nextDirection)
+        {
+        case 0:
+            if (map.getTile(pacman.nextY - 1, pacman.nextX) != 'X' && pacman.nextY - 1 >= 0)
+                pacman.nextY--;
+            break;
+        case 1:
+            if (map.getTile(pacman.nextY + 1, pacman.nextX) != 'X' && pacman.nextY + 1 <= 35)
+                pacman.nextY++;
+            break;
+        case 2:
+            if (pacman.nextY == 17 && pacman.nextX == 1)
+                pacman.nextX = map.getW() - 2;
+            else if (map.getTile(pacman.nextY, pacman.nextX - 1) != 'X' && pacman.nextX - 1 >= 0)
+                pacman.nextX--;
+            break;
+        case 3:
+            if (pacman.nextY == 17 && pacman.nextX == map.getW() - 2)
+                pacman.nextX = 1;
+            else if (map.getTile(pacman.nextY, pacman.nextX + 1) != 'X' && pacman.nextX + 1 <= 35)
+                pacman.nextX++;
+            break;
+        }
+        pacman.score = 0;
+    }
+
+    if ((map.getTile(pacman.nextY, pacman.nextX) == ' ' || map.getTile(pacman.nextY, pacman.nextX) == smallFood.getType() || map.getTile(pacman.nextY, pacman.nextX) == bigFood.getType()) && pacman.nextY != 0 && pacman.nextX != 0)
+    {
+        if (map.getTile(pacman.nextY, pacman.nextX) == smallFood.getType())
+        {
+            pacman.addPoints(smallFood.getPoint());
+            smallFood.decreaseCount();
+        }
+        if (map.getTile(pacman.nextY, pacman.nextX) == bigFood.getType())
+        {
+            pacman.addPoints(bigFood.getPoint());
+            bigFood.decreaseCount();
+        }
+        map.setTile(pacman.y, pacman.x, ' ');
+        map.setTile(pacman.nextY, pacman.nextX, 'P');
+        pacman.x = pacman.nextX;
+        pacman.y = pacman.nextY;
+    }
+}
 
 int Pacman::maxPoints = 0; // Инициализация статической переменной
 // Реализация статического метода
@@ -692,7 +693,7 @@ int main()
         }
         else
         {
-            pacman.move(map, smallFood, bigFood);
+            PacmanMove(map, smallFood, bigFood, pacman);
             blinky.BlinkyMove(pacman, map, settings, window);
             pinky.PinkyMove(pacman, map, settings, window);
             inky.InkyMove(pacman, map, blinky, settings, window);
