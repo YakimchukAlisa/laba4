@@ -297,6 +297,31 @@ public:
     int getLastDirection() const { return lastDirection; }
     void setAll(int a, int b, int c, int d, int e) { x = a, y = b, score = c, d = direction, e = lastDirection; }
 
+       // Перегрузка оператора + (сложение)
+    Ghost operator+(const Ghost& other) const {
+        return Ghost(
+            (x + other.x) / 2, // Среднее арифметическое x
+            (y + other.y) / 2, // Среднее арифметическое y
+             0, //сбрасываем score
+            direction,
+            lastDirection
+         );
+    }
+
+    // Перегрузка префиксного оператора ++
+    Ghost& operator++() {
+       x++;
+       return *this;
+    }
+
+    // Перегрузка постфиксного оператора ++
+    Ghost operator++(int) {
+        Ghost temp = *this;
+        x++;
+        return temp;
+    }
+
+
     float distance(int x1, int y1, int x2, int y2) {
         return (sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2)));
     }
@@ -666,6 +691,24 @@ int main()
     Record.setPosition(11 * settings.getGridSize(), 1 * settings.getGridSize());
     RenderWindow window(VideoMode(settings.getGridSize() * map.getW(), settings.getGridSize() * map.getH()), settings.getWindowTitle());
 
+
+    // Операция сложения призраков:
+    Ghost combinedGhost = blinky + pinky; // Combined Ghost: x = 7, y = 7
+    // Combined Ghost: x = 7, y = 7
+
+    // Префиксный инкремент (сдвиг Blinky вправо):
+    ++blinky;
+    // Blinky (после ++blinky): x = 6, y = 5
+    // Blinky после инкремента: x = 6, y = 5
+
+    // Постфиксный инкремент (сдвиг Pinky вправо):
+    Ghost tempPinky = pinky++;
+    // tempPinky: x = 13, y = 14
+     // Pinky после инкремента:  x = 14, y = 14
+     // Координаты pinky после pinky++: x=14, y=14
+     // Координаты tempPinky после pinky++: x=13, y=14
+
+
     while (window.isOpen())
     {
         Event event;
@@ -682,9 +725,10 @@ int main()
         if (pacman.WonOrLost(smallFood, bigFood, Result))
         {
             blinky.ghostDraw(settings.getBlinkyColor(), window, settings);
-            pinky.ghostDraw(settings.getPinkyColor(), window, settings);
-            inky.ghostDraw(settings.getInkyColor(), window, settings);
-            clyde.ghostDraw(settings.getClydeColor(), window, settings);
+            combinedGhost.ghostDraw(Color::White, window, settings);
+           pinky.ghostDraw(settings.getPinkyColor(), window, settings);
+           inky.ghostDraw(settings.getInkyColor(), window, settings);
+          clyde.ghostDraw(settings.getClydeColor(), window, settings);
             sf::FloatRect textBounds = Result.getLocalBounds();
             sf::Vector2u windowSize = window.getSize();
             Result.setPosition((windowSize.x - textBounds.width) / 2, (windowSize.y - textBounds.height) / 2 - 50);
@@ -694,10 +738,12 @@ int main()
         else
         {
             PacmanMove(map, smallFood, bigFood, pacman);
+            combinedGhost = blinky + pinky;
+            combinedGhost.ghostDraw(Color::White, window, settings);
             blinky.BlinkyMove(pacman, map, settings, window);
-            pinky.PinkyMove(pacman, map, settings, window);
+           pinky.PinkyMove(pacman, map, settings, window);
             inky.InkyMove(pacman, map, blinky, settings, window);
-            clyde.ClydeMove(pacman, map, settings, window);
+           clyde.ClydeMove(pacman, map, settings, window);
             if (clyde.Lose(pacman, blinky, pinky, inky))
             {
                 if (pacman.getLives())
