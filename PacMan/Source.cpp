@@ -6,6 +6,9 @@
 
 using namespace sf;
 
+class Food;
+class Map; 
+
 class GameSettings {
 private:
     std::string windowTitle;
@@ -45,6 +48,55 @@ public:
     sf::Color getClydeColor() const { return clydeColor; }
 };
 
+class Pacman {
+private:
+    int x, y, nextX, nextY, score, nextDirection, lives, points;
+    static int maxPoints;
+public:
+    ~Pacman() {};
+    Pacman(int x, int y, int nextX, int nextY, int score, int nextDirection, int lives, int points) : x(x), y(y), nextX(nextX), nextY(nextY), score(score), nextDirection(nextDirection), lives(lives), points(points) {};
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getPoints() const { return points; }
+    int getLives() const { return lives; }
+    int getNextDirection() const { return nextDirection; }
+    void setX(int a) { x = a; }
+    void setY(int a) { y = a; }
+    void setNextX(int a) { nextX = a; }
+    void setNextY(int a) { nextY = a; }
+    void setScore(int a) { score = a; }
+    void setLives(int a) { lives = a; }
+    void setPoints(int a) { points = a; }
+    void setNextDirection(int a) { nextDirection = a; }
+    void loseLife() { lives--; }
+    void addPoints(int points) { this->points += points; }                                  //оператор this
+    static int getMaxPoints(); // объявление статического метода
+    static void updateMaxPoints(int newPoints);
+    int* getPointsPointer() {
+        return &points; // Возвращаем указатель на переменную score
+    }
+    int& getLivesReference() {
+        return lives; // Возвращаем ссылку на переменную lives
+    }
+
+    void PacmanMove(Map& map, Food& smallFood, Food& bigFood);
+
+    int WonOrLost(Food smallFood, Food bigFood, Text& Result);
+};
+
+
+int Pacman::maxPoints = 0; // Инициализация статической переменной
+// Реализация статического метода
+int Pacman::getMaxPoints() {
+    return maxPoints;
+}
+
+// Реализация статического метода
+void Pacman::updateMaxPoints(int newScore) {
+    if (newScore > maxPoints)
+        maxPoints = newScore;
+}
+
 class Food {
 private:
     int count;
@@ -59,9 +111,13 @@ public:
     char getType() { return type; }
     void decreaseCount() { count--; totalFoodCount--;}
     static int getTotalFoodCount();
+    static void setTotalFoodCount(int count);
+    friend void Pacman::PacmanMove(Map& map, Food& smallFood, Food& bigFood);
+    friend int Pacman::WonOrLost(Food smallFood, Food bigFood, Text& Result);
 };
 int Food::totalFoodCount = 0; // Инициализация статического поля вне класса
 int Food::getTotalFoodCount() { return Food::totalFoodCount; }
+void Food:: setTotalFoodCount(int count) { Food::totalFoodCount = count; }
 
 class Map {
 private:
@@ -74,6 +130,7 @@ public:
     int getW() const { return W; }
     char getTile(int y, int x) const { return  Mase[y][x]; }
     void setTile(int y, int x, char tile) { Mase[y][x] = tile; }
+    friend void Pacman::PacmanMove(Map& map, Food& smallFood, Food& bigFood);
     void createMap() {
         std::string tempMase[] = {
             "                              ",
@@ -155,133 +212,90 @@ public:
     }
 };
 
-class Pacman {
-private:
-    int x, y, nextX, nextY, score, nextDirection, lives, points;
-    static int maxPoints;
-public:
-    ~Pacman() {};
-    Pacman(int x, int y, int nextX, int nextY, int score, int nextDirection, int lives, int points) : x(x), y(y), nextX(nextX), nextY(nextY), score(score), nextDirection(nextDirection), lives(lives), points(points) {};
-    int getX() const { return x; }
-    int getY() const { return y; }
-    int getPoints() const { return points; }
-    int getLives() const { return lives; }
-    int getNextDirection() const { return nextDirection; }
-    void setX(int a) { x = a; }
-    void setY(int a) { y = a; }
-    void setNextX(int a) { nextX = a; }
-    void setNextY(int a) { nextY = a; }
-    void setScore(int a) { score = a; }
-    void setLives(int a) { lives = a; }
-    void setPoints(int a) { points = a; }
-    void setNextDirection(int a) { nextDirection = a; }
-    void loseLife() { lives--; }
-    void addPoints(int points) { this->points += points; }                                  //оператор this
-    static int getMaxPoints(); // объявление статического метода
-    static void updateMaxPoints(int newPoints);
-    int* getPointsPointer() {
-        return &points; // Возвращаем указатель на переменную score
-    }
-    int& getLivesReference() {
-        return lives; // Возвращаем ссылку на переменную lives
-    }
 
-    friend void PacmanMove(Map& map, Food& smallFood, Food& bigFood, Pacman& pacman);
-
-    int WonOrLost(Food smallFood, Food bigFood, Text& Result)
-    {
-        int f = 1;
-        if (Food::getTotalFoodCount() == 0)
-            Result.setString("You won! ");
-        else if (!getLives())
-            Result.setString("You lost! ");
-        else f = 0;
-        return f;
-    }
-};
-
-void PacmanMove(Map& map, Food& smallFood, Food& bigFood, Pacman& pacman)         //дружественная функция
+void Pacman::PacmanMove(Map& map, Food& smallFood, Food& bigFood)         //дружественная функция
 {
-    if (Keyboard::isKeyPressed(Keyboard::Up) && map.getTile(pacman.nextY - 1, pacman.nextX) != 'X' && !(pacman.nextY == 17 && pacman.nextX == 0 || pacman.nextY == 17 && pacman.nextX == map.getW() - 1)) {
-        pacman.nextDirection = 0;
-        pacman.nextX = pacman.x;
-        pacman.nextY = pacman.y;
+    if (Keyboard::isKeyPressed(Keyboard::Up) && map.Mase[nextY - 1][nextX] != 'X' && !(nextY == 17 && nextX == 0 || nextY == 17 && nextX == map.getW() - 1)) {
+        nextDirection = 0;
+        nextX = x;
+        nextY = y;
     }
-    if (Keyboard::isKeyPressed(Keyboard::Down) && map.getTile(pacman.nextY + 1, pacman.nextX) != 'X' && !(pacman.nextY == 17 && pacman.nextX == 0 || pacman.nextY == 17 && pacman.nextX == map.getW() - 1)) {
-        pacman.nextDirection = 1;
-        pacman.nextX = pacman.x;
-        pacman.nextY = pacman.y;
+    if (Keyboard::isKeyPressed(Keyboard::Down) && map.Mase[nextY + 1][nextX] != 'X' && !(nextY == 17 && nextX == 0 || nextY == 17 && nextX == map.getW() - 1)) {
+        nextDirection = 1;
+        nextX = x;
+        nextY = y;
     }
-    if (Keyboard::isKeyPressed(Keyboard::Left) && (map.getTile(pacman.nextY, pacman.nextX - 1) != 'X')) {
-        pacman.nextDirection = 2;
-        pacman.nextX = pacman.x;
-        pacman.nextY = pacman.y;
+    if (Keyboard::isKeyPressed(Keyboard::Left) && (map.Mase[nextY][nextX - 1] != 'X')) {
+        nextDirection = 2;
+        nextX = x;
+        nextY = y;
     }
-    if (Keyboard::isKeyPressed(Keyboard::Right) && (map.getTile(pacman.nextY, pacman.nextX + 1) != 'X')) {
-        pacman.nextDirection = 3;
-        pacman.nextX = pacman.x;
-        pacman.nextY = pacman.y;
+    if (Keyboard::isKeyPressed(Keyboard::Right) && (map.Mase[nextY][nextX + 1] != 'X')) {
+        nextDirection = 3;
+        nextX = x;
+        nextY = y;
     }
 
-    pacman.score++;
-    if (pacman.score >= 150)
+    score++;
+    if (score >= 150)
     {
-        switch (pacman.nextDirection)
+        switch (nextDirection)
         {
         case 0:
-            if (map.getTile(pacman.nextY - 1, pacman.nextX) != 'X' && pacman.nextY - 1 >= 0)
-                pacman.nextY--;
+            if (map.Mase[nextY - 1][nextX] != 'X' && nextY - 1 >= 0)
+                nextY--;
             break;
         case 1:
-            if (map.getTile(pacman.nextY + 1, pacman.nextX) != 'X' && pacman.nextY + 1 <= 35)
-                pacman.nextY++;
+            if (map.Mase[nextY + 1][nextX] != 'X' && nextY + 1 <= 35)
+                nextY++;
             break;
         case 2:
-            if (pacman.nextY == 17 && pacman.nextX == 1)
-                pacman.nextX = map.getW() - 2;
-            else if (map.getTile(pacman.nextY, pacman.nextX - 1) != 'X' && pacman.nextX - 1 >= 0)
-                pacman.nextX--;
+            if (nextY == 17 && nextX == 1)
+                nextX = map.W - 2;
+            else if (map.Mase[nextY][nextX - 1] != 'X' && nextX - 1 >= 0)
+                nextX--;
             break;
         case 3:
-            if (pacman.nextY == 17 && pacman.nextX == map.getW() - 2)
-                pacman.nextX = 1;
-            else if (map.getTile(pacman.nextY, pacman.nextX + 1) != 'X' && pacman.nextX + 1 <= 35)
-                pacman.nextX++;
+            if (nextY == 17 && nextX == map.getW() - 2)
+                nextX = 1;
+            else if (map.Mase[nextY][nextX + 1] != 'X' && nextX + 1 <= 35)
+                nextX++;
             break;
         }
-        pacman.score = 0;
+        score = 0;
     }
 
-    if ((map.getTile(pacman.nextY, pacman.nextX) == ' ' || map.getTile(pacman.nextY, pacman.nextX) == smallFood.getType() || map.getTile(pacman.nextY, pacman.nextX) == bigFood.getType()) && pacman.nextY != 0 && pacman.nextX != 0)
+    if ((map.Mase[nextY][nextX] == ' ' || map.Mase[nextY][nextX] == smallFood.getType() || map.Mase[nextY][nextX] == bigFood.getType()) && nextY != 0 && nextX != 0)
     {
-        if (map.getTile(pacman.nextY, pacman.nextX) == smallFood.getType())
+        if (map.Mase[nextY][nextX] == smallFood.getType())
         {
-            pacman.addPoints(smallFood.getPoint());
+            addPoints(smallFood.point);
             smallFood.decreaseCount();
         }
-        if (map.getTile(pacman.nextY, pacman.nextX) == bigFood.getType())
+        if (map.Mase[nextY][nextX] == bigFood.getType())
         {
-            pacman.addPoints(bigFood.getPoint());
+            addPoints(bigFood.point);
             bigFood.decreaseCount();
         }
-        map.setTile(pacman.y, pacman.x, ' ');
-        map.setTile(pacman.nextY, pacman.nextX, 'P');
-        pacman.x = pacman.nextX;
-        pacman.y = pacman.nextY;
+        map.setTile(y, x, ' ');
+        map.setTile(nextY, nextX, 'P');
+        x = nextX;
+        y = nextY;
     }
 }
 
-int Pacman::maxPoints = 0; // Инициализация статической переменной
-// Реализация статического метода
-int Pacman::getMaxPoints() {
-    return maxPoints;
+
+int Pacman::WonOrLost(Food smallFood, Food bigFood, Text& Result)
+{
+    int f = 1;
+    if (smallFood.totalFoodCount == 0)
+        Result.setString("You won! ");
+    else if (!getLives())
+        Result.setString("You lost! ");
+    else f = 0;
+    return f;
 }
 
-// Реализация статического метода
-void Pacman::updateMaxPoints(int newScore) {
-    if (newScore > maxPoints)
-        maxPoints = newScore;
-}
 
 class Ghost {
 private:
@@ -604,8 +618,10 @@ public:
         map.createMap();
 
         // сброс еды
+        smallFood.setTotalFoodCount(-1);
         smallFood = Food(242, 5, 'o');
         bigFood = Food(4, 10, 'O');
+    
 
         // сброс Pacman
         pacman.setX(settings.getPacmanStartX());
@@ -616,7 +632,7 @@ public:
         int* pointsPtr = pacman.getPointsPointer();
         *pointsPtr = 0;                                              // Изменяем значение points через указатель
         int& livesRef = pacman.getLivesReference();
-        livesRef = 3;                                              // Изменяем значение lives через ссылку
+        livesRef = 30;                                              // Изменяем значение lives через ссылку
         pacman.setScore(0);
 
         // сброс призраков
@@ -642,13 +658,13 @@ int main()
     settingsArray = new GameSettings[2];
     settingsArray[0] = GameSettings("Pac-Man 1", 25, 14, 26, sf::Color::Yellow, sf::Color::Blue, sf::Color::White, sf::Color::White, sf::Color::Red, sf::Color(255, 185, 193),
         sf::Color::Cyan, sf::Color(255, 165, 0));
-    settingsArray[1] = GameSettings("Pac-Man 1", 25, 14, 8, sf::Color(255, 255, 153), sf::Color(100, 149, 247), sf::Color(255, 245, 238),
+    settingsArray[1] = GameSettings("Pac-Man 2", 25, 14, 8, sf::Color(255, 255, 153), sf::Color(100, 149, 247), sf::Color(255, 245, 238),
         sf::Color(255, 228, 225), sf::Color(220, 20, 60), sf::Color(255, 105, 180), sf::Color(176, 234, 240), sf::Color(255, 140, 0)
     );
     srand(time(NULL));
     GameSettings settings = settingsArray[rand() % 2];
 
-    Pacman pacman(settings.getPacmanStartX(), settings.getPacmanStartY(), settings.getPacmanStartX(), settings.getPacmanStartY(), 0, 3, 3, 0);
+    Pacman pacman(settings.getPacmanStartX(), settings.getPacmanStartY(), settings.getPacmanStartX(), settings.getPacmanStartY(), 0, 3, 1, 0);
 
     Ghost** ghostArray = new Ghost * [4];
     Map map(35, 30);
@@ -737,7 +753,7 @@ int main()
         }
         else
         {
-            PacmanMove(map, smallFood, bigFood, pacman);
+            pacman.PacmanMove(map, smallFood, bigFood);
             combinedGhost = blinky + pinky;
             combinedGhost.ghostDraw(Color::White, window, settings);
             blinky.BlinkyMove(pacman, map, settings, window);
@@ -763,7 +779,7 @@ int main()
                 }
             }
         }
-        pointsText.setString("Score " + std::to_string(pacman.getPoints()));
+        pointsText.setString("Score " + std::to_string(smallFood.getTotalFoodCount()));
         livesText.setString("Lives " + std::to_string(pacman.getLives()));
         Record.setString("Record " + std::to_string(pacman.getMaxPoints()));
         window.draw(pointsText);
